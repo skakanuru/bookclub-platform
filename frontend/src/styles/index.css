@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --color-primary: #2C5F4F;
+    --color-primary-light: #3A7860;
+    --color-primary-dark: #1F4538;
+
+    /* Neutral Colors */
+    --color-background: #FAF9F6;
+    --color-surface: #FFFFFF;
+    --color-border: #E8E6E1;
+
+    /* Text Colors */
+    --color-text-primary: #2B2B2B;
+    --color-text-secondary: #6B6B6B;
+    --color-text-tertiary: #9B9B9B;
+
+    /* Accent Colors */
+    --color-accent: #C7956D;
+    --color-danger: #C85A54;
+    --color-success: #5A8C6F;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  body {
+    @apply font-sans bg-background text-text-primary antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+
+  /* Comment text styling */
+  .comment-content {
+    @apply font-serif text-base leading-relaxed;
+  }
+
+  /* Progress ring animation */
+  @keyframes progress-ring {
+    from {
+      stroke-dashoffset: 339.292;
+    }
+  }
+
+  .progress-ring {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
