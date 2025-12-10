@@ -12,7 +12,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import Modal from '../components/common/Modal'
 import BookSearch from '../components/books/BookSearch'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { groupService, bookService } from '../services/groupService'
+import { groupService } from '../services/groupService'
+import { bookService } from '../services/bookService'
 import toast from 'react-hot-toast'
 
 const GroupDetailPage = () => {
@@ -22,6 +23,7 @@ const GroupDetailPage = () => {
   const { group, isLoading: groupLoading } = useGroup(groupId)
   const { books, isLoading: booksLoading } = useGroupBooks(groupId)
   const [showAddBookModal, setShowAddBookModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const queryClient = useQueryClient()
 
   const addBookMutation = useMutation({
@@ -46,6 +48,19 @@ const GroupDetailPage = () => {
     },
     onError: (error) => {
       toast.error(error.response?.data?.detail || 'Failed to add book')
+    },
+  })
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: () => groupService.deleteGroup(groupId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['group', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['groups'] })
+      toast.success('Group deleted')
+      navigate('/groups')
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to delete group')
     },
   })
 
@@ -134,7 +149,7 @@ const GroupDetailPage = () => {
                   const progress = book.user_progress
                   return (
                     <BookCard
-                      key={book.id}
+                      key={book.groupBookId || book.id}
                       book={book}
                       groupId={groupId}
                       progress={progress}
@@ -150,6 +165,25 @@ const GroupDetailPage = () => {
               inviteCode={group.invite_code}
               groupName={group.name}
             />
+
+            {isAdmin && (
+              <div className="mt-6 bg-surface border border-border rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  Danger Zone
+                </h3>
+                <p className="text-sm text-text-secondary mb-4">
+                  Deleting a group removes all books, comments, and member access. This cannot be undone.
+                </p>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setShowDeleteModal(true)}
+                  loading={deleteGroupMutation.isPending}
+                >
+                  Delete Group
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,6 +197,31 @@ const GroupDetailPage = () => {
         <BookSearch
           onSelectBook={(book) => addBookMutation.mutate(book)}
         />
+      </Modal>
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Group"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteGroupMutation.mutate()}
+              loading={deleteGroupMutation.isPending}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-secondary">
+          Are you sure you want to delete <span className="font-semibold text-text-primary">{group?.name}</span>? This action cannot be undone.
+        </p>
       </Modal>
     </div>
   )

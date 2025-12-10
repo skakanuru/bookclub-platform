@@ -1,28 +1,53 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BookOpen, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useGroups } from '../hooks/useGroups'
 import Button from '../components/common/Button'
 import GoogleLoginButton from '../components/auth/GoogleLoginButton'
+import { groupService } from '../services/groupService'
+import toast from 'react-hot-toast'
 
 const JoinGroupPage = () => {
   const { inviteCode } = useParams()
   const navigate = useNavigate()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
-  const { joinGroup, isJoining } = useGroups()
+  const attemptedJoin = useRef(false)
+  const [joining, setJoining] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated && inviteCode && !isJoining) {
-      joinGroup(inviteCode, {
-        onSuccess: (group) => {
-          navigate(`/groups/${group.id}`)
-        },
-      })
-    }
-  }, [isAuthenticated, inviteCode, joinGroup, isJoining, navigate])
+    if (!isAuthenticated || !inviteCode || attemptedJoin.current) return
 
-  if (authLoading || (isAuthenticated && isJoining)) {
+    attemptedJoin.current = true
+    setJoining(true)
+
+    const doJoin = async () => {
+      try {
+        const group = await groupService.joinGroup(inviteCode)
+        navigate(`/groups/${group.id}`)
+      } catch (error) {
+        const detail = error.response?.data?.detail || ''
+        if (detail.toLowerCase().includes('already')) {
+          try {
+            const myGroups = await groupService.getMyGroups()
+            const existing = myGroups.find((g) => g.invite_code === inviteCode)
+            if (existing) {
+              navigate(`/groups/${existing.id}`)
+              return
+            }
+          } catch (fetchErr) {
+            console.error('Failed to fetch groups after join conflict', fetchErr)
+          }
+        }
+        toast.error(detail || 'Failed to join group')
+        attemptedJoin.current = false
+        setJoining(false)
+      }
+    }
+
+    doJoin()
+  }, [isAuthenticated, inviteCode, navigate])
+
+  if (authLoading || (isAuthenticated && joining)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

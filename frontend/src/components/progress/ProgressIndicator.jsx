@@ -1,17 +1,24 @@
 const ProgressIndicator = ({ currentPage, totalPages, percentage, compact = false }) => {
-  const calculatedPercentage = percentage || (currentPage / totalPages) * 100
+  const rawPercentage = percentage != null
+    ? Number(percentage)
+    : (Number(currentPage) / Math.max(Number(totalPages) || 1, 1)) * 100
+
+  const calculatedPercentage = Number.isFinite(rawPercentage) ? rawPercentage : 0
+  const clampedPercentage = Math.min(Math.max(calculatedPercentage, 0), 100)
+  const safeCurrent = Number.isFinite(Number(currentPage)) ? Number(currentPage) : 0
+  const safeTotal = Number.isFinite(Number(totalPages)) ? Number(totalPages) : 0
 
   if (compact) {
     return (
       <div className="space-y-1">
         <div className="flex justify-between items-center text-xs text-text-tertiary font-mono">
-          <span>Page {currentPage} of {totalPages}</span>
-          <span>{calculatedPercentage.toFixed(0)}%</span>
+          <span>Page {safeCurrent} of {safeTotal}</span>
+          <span>{clampedPercentage.toFixed(0)}%</span>
         </div>
         <div className="w-full bg-background rounded-full h-1.5 overflow-hidden">
           <div
             className="bg-primary h-full transition-all duration-300"
-            style={{ width: `${calculatedPercentage}%` }}
+            style={{ width: `${clampedPercentage}%` }}
           />
         </div>
       </div>
@@ -23,10 +30,10 @@ const ProgressIndicator = ({ currentPage, totalPages, percentage, compact = fals
       <div className="flex justify-between items-center">
         <div>
           <p className="text-2xl font-serif font-bold text-text-primary">
-            {calculatedPercentage.toFixed(1)}%
+            {clampedPercentage.toFixed(1)}%
           </p>
           <p className="text-sm text-text-secondary font-mono">
-            Page {currentPage} of {totalPages}
+            Page {safeCurrent} of {safeTotal}
           </p>
         </div>
 
@@ -45,7 +52,7 @@ const ProgressIndicator = ({ currentPage, totalPages, percentage, compact = fals
               className="text-primary progress-ring"
               strokeWidth="8"
               strokeDasharray={339.292}
-              strokeDashoffset={339.292 - (339.292 * calculatedPercentage) / 100}
+              strokeDashoffset={339.292 - (339.292 * clampedPercentage) / 100}
               strokeLinecap="round"
               stroke="currentColor"
               fill="transparent"
@@ -56,7 +63,7 @@ const ProgressIndicator = ({ currentPage, totalPages, percentage, compact = fals
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xl font-bold text-primary">
-              {Math.round(calculatedPercentage)}%
+              {Math.round(clampedPercentage)}%
             </span>
           </div>
         </div>
@@ -65,7 +72,7 @@ const ProgressIndicator = ({ currentPage, totalPages, percentage, compact = fals
       <div className="w-full bg-background rounded-full h-2 overflow-hidden">
         <div
           className="bg-primary h-full transition-all duration-300"
-          style={{ width: `${calculatedPercentage}%` }}
+          style={{ width: `${clampedPercentage}%` }}
         />
       </div>
     </div>

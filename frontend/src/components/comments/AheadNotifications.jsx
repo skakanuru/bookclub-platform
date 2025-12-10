@@ -59,16 +59,21 @@ const AheadNotifications = ({ commentsAhead }) => {
                       {comment.user_name}
                     </p>
                     <p className="text-xs text-text-tertiary">
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(
+                        /[Zz]|[+-]\d{2}:?\d{2}$/.test(comment.created_at)
+                          ? new Date(comment.created_at)
+                          : new Date(`${comment.created_at}Z`),
+                        { addSuffix: true }
+                      )}
                     </p>
                   </div>
                   <span className="text-xs font-mono bg-primary bg-opacity-10 text-primary px-2 py-1 rounded">
-                    Page {comment.progress_page} · {comment.progress_percentage?.toFixed(0)}%
+                    Page {comment.progress_page} · {Number(comment.progress_percentage || 0).toFixed(0)}%
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-text-secondary">
-                  <span>💬</span>
+                  <span>🔒</span>
                   <span>Comment hidden until you reach this point</span>
                 </div>
               </div>

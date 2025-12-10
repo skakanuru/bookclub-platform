@@ -1,5 +1,5 @@
 """Authentication schemas for request/response validation."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from .user import UserResponse
 
 
@@ -8,6 +8,19 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class EmailPasswordRegister(BaseModel):
+    """Schema for email/password registration."""
+    email: EmailStr
+    password: str = Field(..., min_length=6, description="Password (min 6 characters)")
+    name: str = Field(..., min_length=1, description="Full name")
+
+
+class EmailPasswordLogin(BaseModel):
+    """Schema for email/password login."""
+    email: EmailStr
+    password: str
 
 
 class GoogleAuthRequest(BaseModel):

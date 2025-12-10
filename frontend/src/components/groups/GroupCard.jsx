@@ -34,7 +34,12 @@ const GroupCard = ({ group }) => {
 
             {group.created_at && (
               <span>
-                {formatDistanceToNow(new Date(group.created_at), { addSuffix: true })}
+                {formatDistanceToNow(
+                  /[Zz]|[+-]\d{2}:?\d{2}$/.test(group.created_at)
+                    ? new Date(group.created_at)
+                    : new Date(`${group.created_at}Z`),
+                  { addSuffix: true }
+                )}
               </span>
             )}
           </div>

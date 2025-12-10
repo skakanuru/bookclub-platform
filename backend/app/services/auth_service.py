@@ -1,8 +1,9 @@
-"""Authentication service for Google OAuth and JWT token management."""
+"""Authentication service for email/password and Google OAuth."""
 from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from passlib.context import CryptContext
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from ..config import get_settings
@@ -12,10 +13,97 @@ from ..schemas.user import UserResponse
 from ..utils.security import create_access_token
 
 settings = get_settings()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:
     """Service for handling authentication operations."""
+
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Hash a password. Truncates to 72 bytes for bcrypt compatibility."""
+        # Bcrypt has a 72-byte limit, so truncate if necessary
+        password_bytes = password.encode('utf-8')[:72]
+        return pwd_context.hash(password_bytes)
+
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against its hash. Truncates to 72 bytes for bcrypt compatibility."""
+        # Bcrypt has a 72-byte limit, so truncate if necessary
+        password_bytes = plain_password.encode('utf-8')[:72]
+        return pwd_context.verify(password_bytes, hashed_password)
+
+    @staticmethod
+    def register_user(db: Session, email: str, password: str, name: str) -> User:
+        """
+        Register a new user with email and password.
+
+        Args:
+            db: Database session
+            email: User email
+            password: Plain text password
+            name: User full name
+
+        Returns:
+            Created user
+
+        Raises:
+            HTTPException: If email already exists
+        """
+        # Check if user exists
+        existing_user = db.query(User).filter(User.email == email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+
+        # Create new user
+        user = User(
+            email=email,
+            name=name,
+            password_hash=AuthService.hash_password(password),
+            last_login=datetime.utcnow()
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    @staticmethod
+    def authenticate_user(db: Session, email: str, password: str) -> User:
+        """
+        Authenticate user with email and password.
+
+        Args:
+            db: Database session
+            email: User email
+            password: Plain text password
+
+        Returns:
+            Authenticated user
+
+        Raises:
+            HTTPException: If credentials are invalid
+        """
+        user = db.query(User).filter(User.email == email).first()
+        if not user or not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+
+        if not AuthService.verify_password(password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+
+        # Update last login
+        user.last_login = datetime.utcnow()
+        db.commit()
+        db.refresh(user)
+        return user
 
     @staticmethod
     def verify_google_token(token: str) -> GoogleUserInfo:

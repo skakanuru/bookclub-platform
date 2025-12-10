@@ -34,8 +34,18 @@ export const AuthProvider = ({ children }) => {
     initAuth()
   }, [])
 
-  const login = async (credential) => {
+  const login = async (email, password) => {
+    const { user: newUser } = await authService.emailPasswordLogin(email, password)
+    setUser(newUser)
+  }
+
+  const googleLogin = async (credential) => {
     const { user: newUser } = await authService.googleLogin(credential)
+    setUser(newUser)
+  }
+
+  const register = async (email, password, name) => {
+    const { user: newUser } = await authService.emailPasswordRegister(email, password, name)
     setUser(newUser)
   }
 
@@ -53,6 +63,8 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     isAuthenticated: !!user,
     login,
+    googleLogin,
+    register,
     logout,
   }
 

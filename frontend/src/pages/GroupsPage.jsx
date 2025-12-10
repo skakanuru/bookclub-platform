@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus, Users, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useGroups } from '../hooks/useGroups'
@@ -12,6 +13,7 @@ const GroupsPage = () => {
   const { user, logout } = useAuth()
   const { groups, isLoading, createGroup, isCreating } = useGroups()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const navigate = useNavigate()
 
   if (isLoading) {
     return (
@@ -97,6 +99,7 @@ const GroupsPage = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={createGroup}
+        onCreated={(group) => navigate(`/groups/${group.id}`)}
         isCreating={isCreating}
       />
     </div>

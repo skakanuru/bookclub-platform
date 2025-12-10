@@ -32,12 +32,15 @@ export const useComments = (groupId, bookId) => {
   })
 
   const likeCommentMutation = useMutation({
-    mutationFn: commentService.likeComment,
+    mutationFn: ({ commentId, liked }) => (
+      liked ? commentService.unlikeComment(commentId) : commentService.likeComment(commentId)
+    ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', groupId, bookId] })
+      queryClient.invalidateQueries({ queryKey: ['commentsAhead', groupId, bookId] })
     },
     onError: (error) => {
-      toast.error(error.response?.data?.detail || 'Failed to like comment')
+      toast.error(error.response?.data?.detail || 'Failed to update like')
     },
   })
 

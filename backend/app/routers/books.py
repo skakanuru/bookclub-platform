@@ -8,7 +8,8 @@ from ..schemas.book import (
     BookSearchResult,
     BookResponse,
     GroupBookCreate,
-    GroupBookResponse
+    GroupBookResponse,
+    BookCreate
 )
 from ..services.book_service import BookService
 from ..middleware.auth_middleware import get_current_user
@@ -35,6 +36,32 @@ async def search_books(
         List of book search results
     """
     return await BookService.search_books(q, limit)
+
+
+@router.post("", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
+async def create_book(
+    book_data: BookCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new book record (idempotent on ISBN/Open Library ID).
+    """
+    book = BookService.create_book(db, book_data)
+    return BookResponse.from_orm(book)
+
+
+@router.get("/{book_id}", response_model=BookResponse)
+async def get_book(
+    book_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a book by ID.
+    """
+    book = BookService.get_book(db, book_id)
+    return BookResponse.from_orm(book)
 
 
 @router.post("/groups/{group_id}/books", response_model=GroupBookResponse, status_code=status.HTTP_201_CREATED)

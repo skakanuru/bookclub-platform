@@ -1,7 +1,7 @@
 """Group service for managing groups and memberships."""
 from typing import List, Optional
 from uuid import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func
 from fastapi import HTTPException, status
 from ..config import get_settings
@@ -79,7 +79,9 @@ class GroupService:
         Raises:
             HTTPException: If group not found or user not a member
         """
-        group = db.query(Group).filter(Group.id == group_id).first()
+        group = db.query(Group).options(
+            selectinload(Group.members).selectinload(GroupMember.user)
+        ).filter(Group.id == group_id).first()
         if not group:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -111,7 +113,9 @@ class GroupService:
         Returns:
             List of Group instances
         """
-        return db.query(Group).join(GroupMember).filter(
+        return db.query(Group).options(
+            selectinload(Group.members).selectinload(GroupMember.user)
+        ).join(GroupMember).filter(
             GroupMember.user_id == user_id
         ).all()
 

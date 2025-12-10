@@ -1,6 +1,6 @@
 """Comment management routes with visibility filtering."""
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from uuid import UUID
 from ..database import get_db
@@ -119,7 +119,49 @@ async def get_book_comments(
     return result
 
 
-@router.get("/comments/{comment_id}", response_model=CommentWithUser)
+@router.get("/groups/{group_id}/books/{book_id}/comments/ahead", response_model=List[CommentWithUser])
+async def get_book_comments_ahead(
+    group_id: UUID,
+    book_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get comments that are ahead of the user's visible progress.
+    """
+    comments = CommentService.get_comments_ahead(
+        db,
+        group_id,
+        book_id,
+        current_user.id
+    )
+
+    result = []
+    for comment in comments:
+        like_count = CommentService.get_comment_like_count(db, comment.id)
+        user_has_liked = CommentService.user_has_liked_comment(db, comment.id, current_user.id)
+
+        response = CommentWithUser(
+          id=comment.id,
+          group_id=comment.group_id,
+          book_id=comment.book_id,
+          user_id=comment.user_id,
+          content=comment.content,
+          progress_page=comment.progress_page,
+          progress_total_pages=comment.progress_total_pages,
+          progress_percentage=comment.progress_percentage,
+          created_at=comment.created_at,
+          like_count=like_count,
+          user_has_liked=user_has_liked,
+          user_name=comment.user.name,
+          user_avatar_url=comment.user.avatar_url
+        )
+        result.append(response)
+
+    return result
+
+
+@router.get("/{comment_id}", response_model=CommentWithUser)
 async def get_comment(
     comment_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -159,7 +201,7 @@ async def get_comment(
     return response
 
 
-@router.put("/comments/{comment_id}", response_model=CommentWithUser)
+@router.put("/{comment_id}", response_model=CommentWithUser)
 async def update_comment(
     comment_id: UUID,
     comment_data: CommentUpdate,
@@ -206,7 +248,7 @@ async def update_comment(
     return response
 
 
-@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
     comment_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -223,7 +265,7 @@ async def delete_comment(
     CommentService.delete_comment(db, comment_id, current_user.id)
 
 
-@router.post("/comments/{comment_id}/like", response_model=CommentLikeResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{comment_id}/like", response_model=CommentLikeResponse, status_code=status.HTTP_201_CREATED)
 async def like_comment(
     comment_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -244,7 +286,7 @@ async def like_comment(
     return CommentLikeResponse.from_orm(like)
 
 
-@router.delete("/comments/{comment_id}/like", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{comment_id}/like", status_code=status.HTTP_204_NO_CONTENT)
 async def unlike_comment(
     comment_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -259,3 +301,18 @@ async def unlike_comment(
         db: Database session
     """
     CommentService.unlike_comment(db, comment_id, current_user.id)
+
+
+@router.post("/{comment_id}/report", status_code=status.HTTP_202_ACCEPTED)
+async def report_comment(
+    comment_id: UUID,
+    reason: str = Body(..., embed=True, min_length=1),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Report a comment for review. For now this just acknowledges the report.
+    """
+    # Reuse visibility check to ensure user can see the comment
+    CommentService.get_comment_by_id(db, comment_id, current_user.id)
+    return {"message": "Report received", "comment_id": comment_id, "reason": reason}

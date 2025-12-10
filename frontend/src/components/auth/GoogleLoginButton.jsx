@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const GoogleLoginButton = () => {
-  const { login } = useAuth()
+  const { googleLogin } = useAuth()
   const navigate = useNavigate()
 
   const handleSuccess = async (credentialResponse) => {
     try {
-      await login(credentialResponse.credential)
+      await googleLogin(credentialResponse.credential)
       navigate('/')
     } catch (error) {
       console.error('Login error:', error)

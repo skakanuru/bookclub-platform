@@ -13,10 +13,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    google_id = Column(String(255), unique=True, nullable=False, index=True)
+    google_id = Column(String(255), unique=True, nullable=True, index=True)  # Optional for OAuth
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    avatar_url = Column(String, nullable=True)  # Google avatar initially, then custom upload
+    password_hash = Column(String, nullable=True)  # For email/password auth
+    avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_login = Column(DateTime, default=datetime.utcnow, nullable=False)
 

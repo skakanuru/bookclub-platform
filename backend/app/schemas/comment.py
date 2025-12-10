@@ -16,6 +16,7 @@ class CommentCreate(CommentBase):
     book_id: UUID
     progress_page: int = Field(..., ge=0)
     progress_total_pages: int = Field(..., gt=0)
+    parent_comment_id: Optional[UUID] = None
 
 
 class CommentUpdate(BaseModel):
@@ -43,6 +44,7 @@ class CommentResponse(CommentBase):
     progress_page: int
     progress_total_pages: int
     progress_percentage: Decimal
+    parent_comment_id: Optional[UUID] = None
     created_at: datetime
     like_count: Optional[int] = None
     user_has_liked: Optional[bool] = None

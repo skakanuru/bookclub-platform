@@ -1,13 +1,14 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env?.VITE_API_URL?.trim() || ''
 
+// Use env-configured API base when provided (prod) and fall back to relative
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: false,
 })
 
 // Request interceptor to add auth token

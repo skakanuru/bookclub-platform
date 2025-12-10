@@ -1,8 +1,28 @@
 import api from './api'
 
 export const authService = {
+  async emailPasswordRegister(email, password, name) {
+    const response = await api.post('/auth/register', { email, password, name })
+    const { access_token, user } = response.data
+
+    localStorage.setItem('accessToken', access_token)
+    localStorage.setItem('user', JSON.stringify(user))
+
+    return { token: access_token, user }
+  },
+
+  async emailPasswordLogin(email, password) {
+    const response = await api.post('/auth/login', { email, password })
+    const { access_token, user } = response.data
+
+    localStorage.setItem('accessToken', access_token)
+    localStorage.setItem('user', JSON.stringify(user))
+
+    return { token: access_token, user }
+  },
+
   async googleLogin(credential) {
-    const response = await api.post('/auth/google', { credential })
+    const response = await api.post('/auth/google', { token: credential })
     const { access_token, user } = response.data
 
     localStorage.setItem('accessToken', access_token)

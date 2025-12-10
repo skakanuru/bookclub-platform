@@ -9,6 +9,7 @@ export const useProgress = (groupId, bookId) => {
     queryKey: ['progress', groupId, bookId],
     queryFn: () => progressService.getProgress(groupId, bookId),
     enabled: !!groupId && !!bookId,
+    retry: false, // surface 404/no-progress as null
   })
 
   const updateProgressMutation = useMutation({

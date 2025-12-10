@@ -149,7 +149,7 @@ const BookDiscussionPage = () => {
               </h2>
               <p className="text-sm text-text-secondary">
                 {progress
-                  ? `Showing comments up to page ${Math.max(0, progress.current_page - Math.ceil(progress.total_pages * 0.03))} (${Math.max(0, progress.progress_percentage - 3).toFixed(1)}%)`
+                  ? `Showing comments up to page ${progress.current_page} (${Number(progress.progress_percentage || 0).toFixed(1)}%)`
                   : 'Set your progress to see comments'}
               </p>
             </div>
@@ -162,6 +162,7 @@ const BookDiscussionPage = () => {
               onSubmit={createComment}
               isSubmitting={isCreatingComment}
               currentProgress={progress}
+              bookId={bookId}
             />
 
             <CommentFeed
@@ -169,7 +170,9 @@ const BookDiscussionPage = () => {
               isLoading={commentsLoading}
               onLike={likeComment}
               onReport={reportComment}
+              onReply={createComment}
               currentUserId={user?.id}
+              currentProgress={progress}
             />
           </div>
         </div>

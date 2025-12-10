@@ -11,7 +11,9 @@ from ..schemas.group import (
     GroupJoinRequest,
     GroupMemberResponse
 )
+from ..schemas.book import GroupBookCreate, GroupBookResponse, BookResponse
 from ..services.group_service import GroupService
+from ..services.book_service import BookService
 from ..middleware.auth_middleware import get_current_user
 from ..models.user import User
 from ..models.group import GroupMember
@@ -38,9 +40,29 @@ async def create_group(
     """
     group = GroupService.create_group(db, current_user.id, group_data)
 
-    # Add member count
-    response = GroupResponse.from_orm(group)
-    response.member_count = len(group.members)
+    # Manually construct response with member data
+    members_data = []
+    for member in group.members:
+        members_data.append(GroupMemberResponse(
+            id=member.id,
+            user_id=member.user_id,
+            group_id=member.group_id,
+            role=member.role,
+            joined_at=member.joined_at,
+            user_name=member.user.name,
+            user_avatar_url=member.user.avatar_url
+        ))
+
+    response = GroupResponse(
+        id=group.id,
+        name=group.name,
+        description=group.description,
+        invite_code=group.invite_code,
+        created_by=group.created_by,
+        created_at=group.created_at,
+        member_count=len(group.members),
+        members=members_data
+    )
     return response
 
 
@@ -61,11 +83,31 @@ async def get_my_groups(
     """
     groups = GroupService.get_user_groups(db, current_user.id)
 
-    # Add member counts
+    # Manually construct response with member data
     result = []
     for group in groups:
-        response = GroupResponse.from_orm(group)
-        response.member_count = len(group.members)
+        members_data = []
+        for member in group.members:
+            members_data.append(GroupMemberResponse(
+                id=member.id,
+                user_id=member.user_id,
+                group_id=member.group_id,
+                role=member.role,
+                joined_at=member.joined_at,
+                user_name=member.user.name,
+                user_avatar_url=member.user.avatar_url
+            ))
+
+        response = GroupResponse(
+            id=group.id,
+            name=group.name,
+            description=group.description,
+            invite_code=group.invite_code,
+            created_by=group.created_by,
+            created_at=group.created_at,
+            member_count=len(group.members),
+            members=members_data
+        )
         result.append(response)
 
     return result
@@ -90,14 +132,10 @@ async def get_group(
     """
     group = GroupService.get_group_by_id(db, group_id, current_user.id)
 
-    # Add member count and members list
-    response = GroupResponse.from_orm(group)
-    response.member_count = len(group.members)
-
-    # Add member details
-    members = []
+    # Manually construct response with member data
+    members_data = []
     for member in group.members:
-        member_response = GroupMemberResponse(
+        members_data.append(GroupMemberResponse(
             id=member.id,
             user_id=member.user_id,
             group_id=member.group_id,
@@ -105,11 +143,61 @@ async def get_group(
             joined_at=member.joined_at,
             user_name=member.user.name,
             user_avatar_url=member.user.avatar_url
-        )
-        members.append(member_response)
-    response.members = members
+        ))
 
+    response = GroupResponse(
+        id=group.id,
+        name=group.name,
+        description=group.description,
+        invite_code=group.invite_code,
+        created_by=group.created_by,
+        created_at=group.created_at,
+        member_count=len(group.members),
+        members=members_data
+    )
     return response
+
+
+@router.post("/{group_id}/books", response_model=GroupBookResponse, status_code=status.HTTP_201_CREATED)
+async def add_book_to_group(
+    group_id: UUID,
+    book_data: GroupBookCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Add a book to a group (alias for books router, keeps /groups path consistent)."""
+    group_book = BookService.add_book_to_group(db, group_id, current_user.id, book_data)
+    return GroupBookResponse(
+        id=group_book.id,
+        group_id=group_book.group_id,
+        book_id=group_book.book_id,
+        added_by=group_book.added_by,
+        added_at=group_book.added_at,
+        book=BookResponse.from_orm(group_book.book)
+    )
+
+
+@router.get("/{group_id}/books", response_model=List[GroupBookResponse])
+async def get_group_books(
+    group_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List books for a group (alias for books router, keeps /groups path consistent)."""
+    group_books = BookService.get_group_books(db, group_id, current_user.id)
+
+    result = []
+    for group_book in group_books:
+        result.append(GroupBookResponse(
+            id=group_book.id,
+            group_id=group_book.group_id,
+            book_id=group_book.book_id,
+            added_by=group_book.added_by,
+            added_at=group_book.added_at,
+            book=BookResponse.from_orm(group_book.book)
+        ))
+
+    return result
 
 
 @router.put("/{group_id}", response_model=GroupResponse)
@@ -133,8 +221,29 @@ async def update_group(
     """
     group = GroupService.update_group(db, group_id, current_user.id, group_data)
 
-    response = GroupResponse.from_orm(group)
-    response.member_count = len(group.members)
+    # Manually construct response with member data
+    members_data = []
+    for member in group.members:
+        members_data.append(GroupMemberResponse(
+            id=member.id,
+            user_id=member.user_id,
+            group_id=member.group_id,
+            role=member.role,
+            joined_at=member.joined_at,
+            user_name=member.user.name,
+            user_avatar_url=member.user.avatar_url
+        ))
+
+    response = GroupResponse(
+        id=group.id,
+        name=group.name,
+        description=group.description,
+        invite_code=group.invite_code,
+        created_by=group.created_by,
+        created_at=group.created_at,
+        member_count=len(group.members),
+        members=members_data
+    )
     return response
 
 
@@ -174,8 +283,29 @@ async def join_group(
     """
     group = GroupService.join_group(db, current_user.id, join_request.invite_code)
 
-    response = GroupResponse.from_orm(group)
-    response.member_count = len(group.members)
+    # Manually construct response with member data
+    members_data = []
+    for member in group.members:
+        members_data.append(GroupMemberResponse(
+            id=member.id,
+            user_id=member.user_id,
+            group_id=member.group_id,
+            role=member.role,
+            joined_at=member.joined_at,
+            user_name=member.user.name,
+            user_avatar_url=member.user.avatar_url
+        ))
+
+    response = GroupResponse(
+        id=group.id,
+        name=group.name,
+        description=group.description,
+        invite_code=group.invite_code,
+        created_by=group.created_by,
+        created_at=group.created_at,
+        member_count=len(group.members),
+        members=members_data
+    )
     return response
 
 

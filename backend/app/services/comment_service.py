@@ -39,6 +39,14 @@ class CommentService:
         Raises:
             HTTPException: If validation fails
         """
+        # Validate parent comment if provided
+        if comment_data.parent_comment_id:
+            parent = db.query(Comment).filter(Comment.id == comment_data.parent_comment_id).first()
+            if not parent:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent comment not found")
+            if parent.group_id != group_id or parent.book_id != comment_data.book_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Parent comment must be in same group and book")
+
         # Verify user is member of group
         membership = db.query(GroupMember).filter(
             GroupMember.group_id == group_id,
@@ -70,7 +78,8 @@ class CommentService:
             content=comment_data.content,
             progress_page=comment_data.progress_page,
             progress_total_pages=comment_data.progress_total_pages,
-            progress_percentage=progress_percentage
+            progress_percentage=progress_percentage,
+            parent_comment_id=comment_data.parent_comment_id
         )
         db.add(comment)
         db.commit()
@@ -108,8 +117,8 @@ class CommentService:
             # If user has no progress, they can only see comments at 0% progress
             max_visible_percentage = Decimal("0.00")
         else:
-            # User can see comments up to their progress minus buffer
-            max_visible_percentage = user_progress.progress_percentage - Decimal(str(settings.buffer_percentage))
+            # User can see comments up to their current progress (no buffer)
+            max_visible_percentage = user_progress.progress_percentage
 
         # Query comments with visibility filter
         comments = db.query(Comment).filter(
@@ -117,6 +126,47 @@ class CommentService:
                 Comment.group_id == group_id,
                 Comment.book_id == book_id,
                 Comment.progress_percentage <= max_visible_percentage
+            )
+        ).order_by(Comment.progress_percentage, Comment.created_at).all()
+
+        return comments
+
+    @staticmethod
+    def get_comments_ahead(
+        db: Session,
+        group_id: UUID,
+        book_id: UUID,
+        user_id: UUID
+    ) -> List[Comment]:
+        """
+        Get comments ahead of the user's current visibility (used for notifications).
+
+        Args:
+            db: Database session
+            group_id: Group UUID
+            book_id: Book UUID
+            user_id: User UUID
+
+        Returns:
+            List of Comment instances that are ahead of the user's visible progress
+        """
+        # Get user's current progress for this book in this group
+        user_progress = db.query(UserReadingProgress).filter(
+            UserReadingProgress.user_id == user_id,
+            UserReadingProgress.book_id == book_id,
+            UserReadingProgress.group_id == group_id
+        ).first()
+
+        if not user_progress:
+            max_visible_percentage = Decimal("0.00")
+        else:
+            max_visible_percentage = user_progress.progress_percentage
+
+        comments = db.query(Comment).filter(
+            and_(
+                Comment.group_id == group_id,
+                Comment.book_id == book_id,
+                Comment.progress_percentage > max_visible_percentage
             )
         ).order_by(Comment.progress_percentage, Comment.created_at).all()
 
@@ -157,7 +207,7 @@ class CommentService:
         ).first()
 
         if user_progress:
-            max_visible = user_progress.progress_percentage - Decimal(str(settings.buffer_percentage))
+            max_visible = user_progress.progress_percentage
         else:
             max_visible = Decimal("0.00")
 

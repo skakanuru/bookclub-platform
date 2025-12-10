@@ -7,7 +7,7 @@ export const groupService = {
   },
 
   async getMyGroups() {
-    const response = await api.get('/groups/my-groups')
+    const response = await api.get('/groups')
     return response.data
   },
 
@@ -32,12 +32,16 @@ export const groupService = {
   },
 
   async getGroupBooks(groupId) {
-    const response = await api.get(`/groups/${groupId}/books`)
+    const response = await api.get(`/books/groups/${groupId}/books`)
     return response.data
   },
 
   async addBookToGroup(groupId, bookId) {
-    const response = await api.post(`/groups/${groupId}/books`, { book_id: bookId })
+    const response = await api.post(`/books/groups/${groupId}/books`, { book_id: bookId })
     return response.data
+  },
+
+  async deleteGroup(groupId) {
+    await api.delete(`/groups/${groupId}`)
   }
 }

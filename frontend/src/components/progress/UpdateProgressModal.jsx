@@ -54,7 +54,7 @@ const UpdateProgressModal = ({ isOpen, onClose, onUpdate, currentProgress, isUpd
   }
 
   const percentage = totalPages && currentPage
-    ? ((parseInt(currentPage, 10) / parseInt(totalPages, 10)) * 100).toFixed(1)
+    ? Number(((parseInt(currentPage, 10) / parseInt(totalPages, 10)) * 100).toFixed(1))
     : 0
 
   return (
@@ -103,7 +103,7 @@ const UpdateProgressModal = ({ isOpen, onClose, onUpdate, currentProgress, isUpd
               You're <span className="font-bold text-primary">{percentage}%</span> through the book
             </p>
             <p className="text-xs text-text-tertiary mt-1">
-              You'll see comments from readers up to page {Math.max(0, parseInt(currentPage, 10) - Math.ceil(parseInt(totalPages, 10) * 0.03))} ({Math.max(0, parseFloat(percentage) - 3).toFixed(1)}%)
+              Comments are visible up to this exact progress.
             </p>
           </div>
         )}

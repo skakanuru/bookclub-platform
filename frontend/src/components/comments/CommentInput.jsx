@@ -3,7 +3,7 @@ import { Send } from 'lucide-react'
 import Button from '../common/Button'
 import Card from '../common/Card'
 
-const CommentInput = ({ onSubmit, isSubmitting, currentProgress }) => {
+const CommentInput = ({ onSubmit, isSubmitting, currentProgress, bookId }) => {
   const [content, setContent] = useState('')
 
   const handleSubmit = (e) => {
@@ -12,7 +12,12 @@ const CommentInput = ({ onSubmit, isSubmitting, currentProgress }) => {
     if (!content.trim()) return
 
     onSubmit(
-      { content: content.trim() },
+      {
+        content: content.trim(),
+        book_id: bookId,
+        progress_page: currentProgress?.current_page ?? 0,
+        progress_total_pages: currentProgress?.total_pages ?? 1,
+      },
       {
         onSuccess: () => {
           setContent('')
@@ -40,7 +45,7 @@ const CommentInput = ({ onSubmit, isSubmitting, currentProgress }) => {
               Share your thoughts
             </label>
             <span className="text-xs text-text-tertiary font-mono">
-              Commenting at Page {currentProgress.current_page} ({currentProgress.progress_percentage?.toFixed(0)}%)
+              Commenting at Page {currentProgress.current_page} ({Number(currentProgress.progress_percentage || 0).toFixed(0)}%)
             </span>
           </div>
 

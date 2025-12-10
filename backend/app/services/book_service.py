@@ -120,6 +120,29 @@ class BookService:
         return book
 
     @staticmethod
+    def get_book(db: Session, book_id: UUID) -> Book:
+        """
+        Get a book by ID.
+
+        Args:
+            db: Database session
+            book_id: Book UUID
+
+        Returns:
+            Book instance
+
+        Raises:
+            HTTPException: If book not found
+        """
+        book = db.query(Book).filter(Book.id == book_id).first()
+        if not book:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Book not found"
+            )
+        return book
+
+    @staticmethod
     def add_book_to_group(
         db: Session,
         group_id: UUID,

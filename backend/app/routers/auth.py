@@ -1,14 +1,57 @@
-"""Authentication routes for Google OAuth and token management."""
+"""Authentication routes for email/password and Google OAuth."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas.auth import GoogleAuthRequest, TokenResponse
+from ..schemas.auth import EmailPasswordRegister, EmailPasswordLogin, GoogleAuthRequest, TokenResponse
 from ..schemas.user import UserResponse
 from ..services.auth_service import AuthService
 from ..middleware.auth_middleware import get_current_user
 from ..models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/register", response_model=TokenResponse)
+async def register(
+    user_data: EmailPasswordRegister,
+    db: Session = Depends(get_db)
+):
+    """
+    Register a new user with email and password.
+
+    Args:
+        user_data: Registration data (email, password, name)
+        db: Database session
+
+    Returns:
+        JWT access token and user information
+    """
+    user = AuthService.register_user(
+        db,
+        email=user_data.email,
+        password=user_data.password,
+        name=user_data.name
+    )
+    return AuthService.create_token_response(user)
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login(
+    credentials: EmailPasswordLogin,
+    db: Session = Depends(get_db)
+):
+    """
+    Login with email and password.
+
+    Args:
+        credentials: Login credentials (email, password)
+        db: Database session
+
+    Returns:
+        JWT access token and user information
+    """
+    user = AuthService.authenticate_user(db, credentials.email, credentials.password)
+    return AuthService.create_token_response(user)
 
 
 @router.post("/google", response_model=TokenResponse)

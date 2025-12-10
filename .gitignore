@@ -92,3 +92,6 @@ alembic/versions/*.pyc
 # Uploads (if storing locally)
 uploads/
 media/
+
+# Claude
+.claude/

@@ -26,6 +26,7 @@ class Comment(Base):
         nullable=False,
         server_default=text("0.00")
     )
+    parent_comment_id = Column(UUID(as_uuid=True), ForeignKey("comments.id", ondelete="CASCADE"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
@@ -34,6 +35,13 @@ class Comment(Base):
     user = relationship("User", back_populates="comments")
     likes = relationship("CommentLike", back_populates="comment", cascade="all, delete-orphan")
     reports = relationship("SpoilerReport", back_populates="comment", cascade="all, delete-orphan")
+    parent = relationship("Comment", remote_side=[id], back_populates="replies")
+    replies = relationship(
+        "Comment",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
 
     __table_args__ = (
         CheckConstraint("LENGTH(content) >= 1 AND LENGTH(content) <= 1000", name="check_content_length"),

@@ -1,6 +1,5 @@
 """Main FastAPI application for BookClub Platform."""
 from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,6 +7,7 @@ import logging
 from .config import get_settings
 from .database import engine, Base
 from .routers import auth, users, groups, books, comments, progress
+from .middleware.cors import SimpleCORSMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -30,15 +30,10 @@ app = FastAPI(
     redoc_url="/redoc" if settings.environment == "development" else None,
 )
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.frontend_url],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
+# Configure CORS - Using custom middleware
+logger.info(f"Setting up custom CORS middleware for environment: {settings.environment}")
+app.add_middleware(SimpleCORSMiddleware)
+logger.info("Custom CORS middleware added successfully")
 
 
 # Exception handlers

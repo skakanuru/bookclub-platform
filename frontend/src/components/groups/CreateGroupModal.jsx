@@ -3,7 +3,7 @@ import Modal from '../common/Modal'
 import Input from '../common/Input'
 import Button from '../common/Button'
 
-const CreateGroupModal = ({ isOpen, onClose, onCreate, isCreating }) => {
+const CreateGroupModal = ({ isOpen, onClose, onCreate, onCreated, isCreating }) => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState({})
@@ -22,11 +22,14 @@ const CreateGroupModal = ({ isOpen, onClose, onCreate, isCreating }) => {
     }
 
     onCreate({ name, description }, {
-      onSuccess: () => {
+      onSuccess: (group) => {
         setName('')
         setDescription('')
         setErrors({})
         onClose()
+        if (onCreated) {
+          onCreated(group)
+        }
       }
     })
   }
