@@ -7,7 +7,7 @@ import logging
 from .config import get_settings
 from .database import engine, Base
 from .routers import auth, users, groups, books, comments, progress
-from .middleware.cors import SimpleCORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -30,10 +30,16 @@ app = FastAPI(
     redoc_url="/redoc" if settings.environment == "development" else None,
 )
 
-# Configure CORS - Using custom middleware
-logger.info(f"Setting up custom CORS middleware for environment: {settings.environment}")
-app.add_middleware(SimpleCORSMiddleware)
-logger.info("Custom CORS middleware added successfully")
+# Configure CORS - Using FastAPI's built-in middleware
+logger.info(f"Setting up CORS middleware for environment: {settings.environment}")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+logger.info("CORS middleware added successfully")
 
 
 # Exception handlers
