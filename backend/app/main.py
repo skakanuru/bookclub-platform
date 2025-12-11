@@ -32,9 +32,18 @@ app = FastAPI(
 
 # Configure CORS - Using FastAPI's built-in middleware
 logger.info(f"Setting up CORS middleware for environment: {settings.environment}")
+# Explicitly allow known frontend origins (prod + local dev)
+allowed_origins = {
+    settings.frontend_url.rstrip("/"),
+    "http://localhost:5173",
+    "https://localhost:5173",
+    "http://localhost:3000",
+    "https://localhost:3000",
+}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin for origin in allowed_origins if origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
