@@ -62,6 +62,7 @@ logger.info(f"CORS allowed origins: {allowlist}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowlist,
+    allow_origin_regex=".*",  # fallback to ensure header on any origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
