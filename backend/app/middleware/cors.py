@@ -2,53 +2,33 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-import os
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class SimpleCORSMiddleware(BaseHTTPMiddleware):
-    """Simple CORS middleware that allows localhost and production frontend."""
+    """Simple CORS middleware that allows all origins for now."""
 
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin", "")
-        frontend_url = os.getenv("FRONTEND_URL", "")
-
-        # Check if origin is allowed (localhost, 127.0.0.1, or production frontend, or Vercel preview)
-        is_allowed = (
-            origin.startswith("http://localhost") or
-            origin.startswith("https://localhost") or
-            origin.startswith("http://127.0.0.1") or
-            origin.startswith("https://127.0.0.1") or
-            origin == frontend_url or
-            ".vercel.app" in origin  # Allow all Vercel preview deployments
-        )
-
-        logger.info(f"CORS Check - Origin: {origin}, Allowed: {is_allowed}, Frontend URL: {frontend_url}")
 
         # Handle preflight requests
         if request.method == "OPTIONS":
-            if is_allowed:
-                return Response(
-                    status_code=200,
-                    headers={
-                        "Access-Control-Allow-Origin": origin,
-                        "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT",
-                        "Access-Control-Allow-Headers": "*",
-                        "Access-Control-Allow-Credentials": "true",
-                        "Access-Control-Max-Age": "600",
-                    },
-                )
-            else:
-                return Response(status_code=403, content="Origin not allowed")
+            return Response(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": origin or "*",
+                    "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT",
+                    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "600",
+                },
+            )
 
         # Handle actual requests
         response = await call_next(request)
 
-        if is_allowed:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Expose-Headers"] = "*"
+        # Add CORS headers to all responses
+        response.headers["Access-Control-Allow-Origin"] = origin or "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Expose-Headers"] = "*"
 
         return response
