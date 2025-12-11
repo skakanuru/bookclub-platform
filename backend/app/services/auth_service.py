@@ -24,7 +24,8 @@ class AuthService:
         """Hash a password. Truncates to 72 bytes for bcrypt compatibility."""
         # Bcrypt has a 72-byte limit, so truncate if necessary
         password_bytes = password.encode('utf-8')[:72]
-        return pwd_context.hash(password_bytes)
+        truncated_password = password_bytes.decode('utf-8', errors='ignore')
+        return pwd_context.hash(truncated_password)
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
