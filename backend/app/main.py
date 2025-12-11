@@ -34,11 +34,20 @@ app = FastAPI(
 logger.info(f"Setting up CORS middleware for environment: {settings.environment}")
 
 # Build explicit allowlist from env (supports comma-separated) + common local dev hosts
-env_origins = [
-    origin.strip().rstrip("/")
-    for origin in settings.frontend_url.split(",")
-    if origin.strip()
-]
+def expand_origin(origin: str) -> list[str]:
+    """Normalize origin strings; if scheme missing, include both https/http variants."""
+    cleaned = origin.strip().rstrip("/")
+    if not cleaned:
+        return []
+    if cleaned.startswith(("http://", "https://")):
+        return [cleaned]
+    return [f"https://{cleaned}", f"http://{cleaned}"]
+
+
+env_origins: list[str] = []
+for raw_origin in settings.frontend_url.split(","):
+    env_origins.extend(expand_origin(raw_origin))
+
 allowed_origins = {
     *env_origins,
     "http://localhost:5173",
