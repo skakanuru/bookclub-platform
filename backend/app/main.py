@@ -32,18 +32,27 @@ app = FastAPI(
 
 # Configure CORS - Using FastAPI's built-in middleware
 logger.info(f"Setting up CORS middleware for environment: {settings.environment}")
-# Explicitly allow known frontend origins (prod + local dev)
+
+# Build explicit allowlist from env (supports comma-separated) + common local dev hosts
+env_origins = [
+    origin.strip().rstrip("/")
+    for origin in settings.frontend_url.split(",")
+    if origin.strip()
+]
 allowed_origins = {
-    settings.frontend_url.rstrip("/"),
+    *env_origins,
     "http://localhost:5173",
     "https://localhost:5173",
     "http://localhost:3000",
     "https://localhost:3000",
 }
 
+allowlist = [origin for origin in allowed_origins if origin]
+logger.info(f"CORS allowed origins: {allowlist}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin for origin in allowed_origins if origin],
+    allow_origins=allowlist,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
