@@ -2,15 +2,15 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from ..config import get_settings
+import os
 
 
 class SimpleCORSMiddleware(BaseHTTPMiddleware):
     """Simple CORS middleware that allows localhost and production frontend."""
 
     async def dispatch(self, request: Request, call_next):
-        settings = get_settings()
         origin = request.headers.get("origin", "")
+        frontend_url = os.getenv("FRONTEND_URL", "")
 
         # Check if origin is allowed (localhost, 127.0.0.1, or production frontend, or Vercel preview)
         is_allowed = (
@@ -18,8 +18,8 @@ class SimpleCORSMiddleware(BaseHTTPMiddleware):
             origin.startswith("https://localhost") or
             origin.startswith("http://127.0.0.1") or
             origin.startswith("https://127.0.0.1") or
-            origin == settings.frontend_url or
-            origin.endswith(".vercel.app")  # Allow all Vercel preview deployments
+            origin == frontend_url or
+            ".vercel.app" in origin  # Allow all Vercel preview deployments
         )
 
         # Handle preflight requests
