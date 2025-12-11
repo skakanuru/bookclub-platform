@@ -3,6 +3,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleCORSMiddleware(BaseHTTPMiddleware):
@@ -21,6 +24,8 @@ class SimpleCORSMiddleware(BaseHTTPMiddleware):
             origin == frontend_url or
             ".vercel.app" in origin  # Allow all Vercel preview deployments
         )
+
+        logger.info(f"CORS Check - Origin: {origin}, Allowed: {is_allowed}, Frontend URL: {frontend_url}")
 
         # Handle preflight requests
         if request.method == "OPTIONS":
