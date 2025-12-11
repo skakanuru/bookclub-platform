@@ -70,6 +70,34 @@ app.add_middleware(
 logger.info("CORS middleware added successfully")
 
 
+# Final safety net: ensure CORS headers are present on every response, including errors
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    origin = request.headers.get("origin", "")
+
+    # Preflight handling (covers cases where upstream middleware might not run)
+    if request.method == "OPTIONS":
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={},
+            headers={
+                "Access-Control-Allow-Origin": origin or "*",
+                "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT",
+                "Access-Control-Allow-Headers": request.headers.get("Access-Control-Request-Headers", "*"),
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "600",
+            },
+        )
+
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = origin or "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Expose-Headers"] = "*"
+    response.headers.setdefault("Access-Control-Allow-Methods", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT")
+    response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization, *")
+    return response
+
+
 # Exception handlers
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
