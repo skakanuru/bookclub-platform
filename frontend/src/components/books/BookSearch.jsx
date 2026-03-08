@@ -7,6 +7,36 @@ import Button from '../common/Button'
 import BookCover from './BookCover'
 import Card from '../common/Card'
 
+const ManualBookForm = ({ onSelectBook }) => {
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (title.trim() && author.trim()) {
+      onSelectBook({ title: title.trim(), author: author.trim() })
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <Input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Book title"
+      />
+      <Input
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+        placeholder="Author"
+      />
+      <Button type="submit" disabled={!title.trim() || !author.trim()} className="w-full">
+        Add Book
+      </Button>
+    </form>
+  )
+}
+
 const BookSearch = ({ onSelectBook }) => {
   const [query, setQuery] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -49,9 +79,12 @@ const BookSearch = ({ onSelectBook }) => {
       )}
 
       {books && books.length === 0 && (
-        <p className="text-center text-text-tertiary py-8">
-          No books found. Try a different search.
-        </p>
+        <div className="space-y-4">
+          <p className="text-center text-text-tertiary py-4">
+            No books found. Add it manually:
+          </p>
+          <ManualBookForm onSelectBook={onSelectBook} />
+        </div>
       )}
 
       {books && books.length > 0 && (
