@@ -11,12 +11,13 @@ from ..schemas.group import (
     GroupJoinRequest,
     GroupMemberResponse
 )
-from ..schemas.book import GroupBookCreate, GroupBookResponse, BookResponse
+from ..schemas.book import GroupBookCreate, GroupBookResponse, BookResponse, UserProgressSnapshot
 from ..services.group_service import GroupService
 from ..services.book_service import BookService
 from ..middleware.auth_middleware import get_current_user
 from ..models.user import User
 from ..models.group import GroupMember
+from ..models.progress import UserReadingProgress
 
 router = APIRouter(prefix="/groups", tags=["Groups"])
 
@@ -188,13 +189,25 @@ async def get_group_books(
 
     result = []
     for group_book in group_books:
+        progress = db.query(UserReadingProgress).filter(
+            UserReadingProgress.user_id == current_user.id,
+            UserReadingProgress.book_id == group_book.book_id,
+            UserReadingProgress.group_id == group_book.group_id,
+        ).first()
+        user_progress = UserProgressSnapshot(
+            current_page=progress.current_page,
+            total_pages=progress.total_pages,
+            progress_percentage=progress.progress_percentage,
+        ) if progress else None
+
         result.append(GroupBookResponse(
             id=group_book.id,
             group_id=group_book.group_id,
             book_id=group_book.book_id,
             added_by=group_book.added_by,
             added_at=group_book.added_at,
-            book=BookResponse.from_orm(group_book.book)
+            book=BookResponse.from_orm(group_book.book),
+            user_progress=user_progress,
         ))
 
     return result

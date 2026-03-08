@@ -1,7 +1,8 @@
 """Book schemas for request/response validation."""
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from uuid import UUID
+from decimal import Decimal
 from pydantic import BaseModel, Field
 
 
@@ -51,6 +52,16 @@ class GroupBookCreate(BaseModel):
     cover_url: Optional[str] = None
 
 
+class UserProgressSnapshot(BaseModel):
+    """Minimal progress snapshot embedded in group book responses."""
+    current_page: int
+    total_pages: int
+    progress_percentage: Decimal
+
+    class Config:
+        from_attributes = True
+
+
 class GroupBookResponse(BaseModel):
     """Schema for group book response."""
     id: UUID
@@ -59,6 +70,7 @@ class GroupBookResponse(BaseModel):
     added_by: Optional[UUID] = None
     added_at: datetime
     book: BookResponse
+    user_progress: Optional[UserProgressSnapshot] = None
 
     class Config:
         from_attributes = True

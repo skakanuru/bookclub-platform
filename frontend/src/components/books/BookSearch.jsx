@@ -73,9 +73,9 @@ const BookSearch = ({ onSelectBook }) => {
                     {book.title}
                   </h4>
                   <p className="text-sm text-text-secondary">{book.author}</p>
-                  {book.first_publish_year && (
+                  {book.publish_year && (
                     <p className="text-xs text-text-tertiary mt-1">
-                      Published {book.first_publish_year}
+                      Published {book.publish_year}
                     </p>
                   )}
                 </div>

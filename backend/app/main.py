@@ -89,7 +89,14 @@ async def add_cors_headers(request: Request, call_next):
             },
         )
 
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.error(f"Unhandled exception processing {request.url}: {exc}", exc_info=True)
+        response = JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
+        )
     response.headers["Access-Control-Allow-Origin"] = origin or "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Expose-Headers"] = "*"

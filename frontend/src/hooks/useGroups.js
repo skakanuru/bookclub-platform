@@ -90,6 +90,7 @@ export const useGroupBooks = (groupId) => {
     ...groupBook.book,
     groupBookId: groupBook.id,
     groupId: groupBook.group_id,
+    user_progress: groupBook.user_progress || null,
   }))
 
   return { books, isLoading }
